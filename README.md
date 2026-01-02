@@ -2,6 +2,7 @@
 * (Undergraduate Thesis Project)
 
 ## 📌 Introduction
+![u-net](https://github.com/user-attachments/assets/6b0c79f4-8c3e-4984-9032-66654716801f)
 
 ## 🔽 Contracting Path (Encoder)
 
