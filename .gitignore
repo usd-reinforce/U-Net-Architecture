@@ -1,0 +1,25 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb_checkpoints/
+
+# Virtual env
+venv/
+/env/
+
+# =========================
+# Dataset (ignore semua)
+# =========================
+dataset/*
+!dataset/dataset_link.txt
+!dataset/isic_dataset.py
+!dataset/__init__.py
+
+# =========================
+# ZIP files (extra safety)
+# =========================
+*.zip
