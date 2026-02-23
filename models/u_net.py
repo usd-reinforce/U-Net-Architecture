@@ -5,6 +5,12 @@ from torchsummary import summary
 
 class ConvBlock(nn.Module):
     """
+    ConvBlock used in U-Net architecture.
+
+    This block consists of two consecutive convolution layers
+    with kernel_size 3x3, padding is set to 1 to preserve spatial dimensions,
+    each followed by batch normalization and ReLU activation function.
+
     Parameters
     ----------
     in_c: int
@@ -12,7 +18,7 @@ class ConvBlock(nn.Module):
 
     Input
     -----
-    x: torch.Tensor -> tenspr of shape (B, in_c, H, W)
+    x: torch.Tensor -> tensor of shape (B, in_c, H, W)
     B -> how much images in single patch, example: 8
     in_c -> input channel, example: 3 (RGB)
     H -> height
@@ -41,6 +47,12 @@ class ConvBlock(nn.Module):
     
 class EncoderBlock(nn.Module):
     """
+    Encoder block used in contracting path of U-Net.
+
+    This block consists of ConvBlock class,
+    followed by MaxPooling with 2x2 kernel size,
+    and stride set it to 2 to reduce input data size.
+
     Parameters
     ----------
     in_c: int
@@ -70,16 +82,51 @@ class EncoderBlock(nn.Module):
         return skip, pooled
 
 class DecoderBlock(nn.Module):
+    """
+    Decoder block used for expansive path.
+
+    This block consist of ConvBlock only.
+
+    Parameters
+    ----------
+    in_c: int
+    out_c: int
+
+    Input
+    -----
+    x: torch.Tensor -> tensor of shape (B, in_c, H, W)
+    skip: torch.Tensor
+
+    Output
+    ______
+    torch.Tensor -> Tensor of shape (B, out_c, H2, W2)
+    """
+
     def __init__(self, in_c: int, out_c: int):
         super().__init__()
         self.conv = ConvBlock(in_c, out_c)
 
-    def forward(self, x, skip):
+    def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of decoder block
+        """
         x = F.interpolate(x, size=skip.shape[2:], mode="bilinear", align_corners=False)
         x = torch.cat([x, skip], dim=1)
         return self.conv(x)
 
 class UNet(nn.Module):
+    """
+    Input
+    ----
+    in_c: int
+    num_classes: int
+
+    Output
+    out: torch.Tensor -> Tensor of shape (B, in_c, H, W)
+
+    ------
+
+    """
     def __init__(self, in_channels: int = 3, num_classes: int = 1):
         super().__init__()
         self.d1 = EncoderBlock(in_channels, 64)
@@ -98,7 +145,7 @@ class UNet(nn.Module):
 
         self.__init_weights()
     
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         s1, p1 = self.d1(x)
         s2, p2 = self.d2(p1)
         s3, p3 = self.d3(p2)
@@ -124,5 +171,8 @@ class UNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 if __name__ == "__main__":
+    """
+    this is for debugging model
+    """
     model = UNet(in_channels=3, num_classes=1).cuda()
     summary(model, input_size=(3, 256, 256))
