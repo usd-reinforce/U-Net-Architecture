@@ -1,0 +1,4 @@
+LoG references:
+- https://medium.com/@fadhilaeka17/implementasi-metode-edge-detection-roberts-prewitt-sobel-dan-log-menggunakan-python-cd79a8094e2b
+- https://medium.com/@2010.jgwong/filtering-and-morphological-operations-in-image-processing-64fdea22bc0f
+- https://medium.com/data-science/understanding-morphological-image-processing-and-its-operations-7bcf1ed11756
