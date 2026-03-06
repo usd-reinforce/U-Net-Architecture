@@ -99,6 +99,7 @@ def laplacian_hr(input_data, debug=False):
     final_img = cv2.inpaint(img, img_dilate, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
 
     if debug:
+        # __debugging__([img, final_img, gray, laplacian_64f, reduced, binary_mask, img_clean, img_bridge, img_se0, img_se45, img_se90, img_dilate])
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         final_rgb = cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB)
 
@@ -167,16 +168,66 @@ def bothat_hr(input_data, debug=False):
     img_se90 = cv2.morphologyEx(subtracted, cv2.MORPH_BLACKHAT, se90)
 
     # add images
-    add_1 = cv2.add(se0, se45)
-    add_2 = cv2.add(add_1, se90)
-
-    # adjustment image
-    adj_img = cv2.convertScaleAbs(add_2, alpha=1.5)
+    add_1 = cv2.add(img_se0, img_se45)
+    add_2 = cv2.add(add_1, img_se90)
 
     # image adjustment
+    p_low, p_high = np.percentile(add_2, (1, 99))
 
     # global image thresholding
+    if p_high > p_low:
+        adjusted = np.clip((add_2 - p_low) * (255.0 / (p_high - p_low)), 0, 255).astype(np.uint8)
+    else:
+        adjusted = add_2
 
-    # image dilation
+    # thresholding using Otsu's method
+    _, binary_mask = cv2.threshold(adjusted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # image dilation using a line structuring element of 9 pixel length
+    kernel_dilate = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+    final_mask = cv2.dilate(binary_mask, kernel_dilate, iterations=1)
 
     # Red, Green, Blue channel hair pixel replacement using interpolation
+    repainted = cv2.inpaint(img, final_mask, 3, cv2.INPAINT_TELEA)
+
+    if debug:
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        final_rgb = cv2.cvtColor(repainted, cv2.COLOR_BGR2RGB)
+
+        fig, ax = plt.subplots(3, 4, figsize=(20, 10))
+
+        ax[0, 0].imshow(img_rgb)
+        ax[0, 0].set_title("original image")
+        ax[0, 1].imshow(gray, cmap='gray')
+        ax[0, 1].set_title("grayscale image")
+        ax[0, 2].imshow(laplacian_64f, cmap='gray')
+        ax[0, 2].set_title("laplacian image filter")
+        ax[0, 3].imshow(blurred_img, cmap='gray')
+        ax[0, 3].set_title("blurred image")
+        ax[1, 0].imshow(laplacian_64f, cmap='gray')
+        ax[1, 0].set_title("Laplacian 64f")
+        ax[1, 1].imshow(subtracted, cmap='gray')
+        ax[1, 1].set_title("subtracted")
+        ax[1, 3].imshow(img_se0, cmap='gray')
+        ax[1, 3].set_title("se0")
+        ax[2, 0].imshow(img_se45, cmap='gray')
+        ax[2, 0].set_title("se45")
+        ax[2, 1].imshow(img_se90, cmap='gray')
+        ax[2, 1].set_title("se90")
+        ax[1, 2].imshow(binary_mask, cmap='gray')
+        ax[1, 2].set_title("binary mask")
+        ax[2, 2].imshow(final_mask, cmap='gray')
+        ax[2, 2].set_title("final mask")
+        ax[2, 3].imshow(final_rgb)
+        ax[2, 3].set_title("result")
+
+        for a in ax.flat:
+            a.axis('off')
+
+        plt.tight_layout()
+        plt.show()
+
+    return repainted, final_mask
+
+# def __debugging__(img_arrays):
+#     pass
